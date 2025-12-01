@@ -1,15 +1,40 @@
+private data class Rotation(val direction: Int, val distance: Int)
+
+private val Rotation.rotation get() = direction * distance
+
+private val Rotation.fullRotationsCount get() = distance / 100
+
+private val Rotation.partialRotation get() = direction * (distance % 100)
+
+private fun moveDial(position: Int, rotation: Rotation) = (position + rotation.partialRotation + 100) % 100
+
+
 fun main() {
-    fun part1(input: List<String>): Int {
-        return TODO()
+    fun part1(rotations: List<Rotation>): Int = rotations
+        .runningFold(initial = 50, ::moveDial)
+        .count { it == 0 }
+
+    fun part2(rotations: List<Rotation>): Int {
+        var zeroCount = 0
+        var dialPosition = 50
+        for (rotation in rotations) {
+            zeroCount += rotation.fullRotationsCount
+            if (dialPosition != 0 && dialPosition + rotation.partialRotation !in 1..99) {
+                zeroCount += 1
+            }
+            dialPosition = moveDial(dialPosition, rotation)
+        }
+        return zeroCount
     }
 
-    fun part2(input: List<String>): Int {
-        return TODO()
+
+    val rotations = readInputLines("day-01-input").map {
+        Rotation(
+            direction = if (it[0] == 'L') -1 else 1,
+            distance = it.drop(1).toInt()
+        )
     }
 
-
-    val input = readInputLines("day-01-input")
-
-    part1(input).println()
-    part2(input).println()
+    part1(rotations).println()
+    part2(rotations).println()
 }
