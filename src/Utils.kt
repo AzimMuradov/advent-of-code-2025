@@ -103,9 +103,9 @@ inline fun <T> List<T>.indexOfLastOrNull(
     .indexOfLast(predicate)
     .takeUnless { it == -1 }
 
-fun List<String>.dim() = Rect(
-    w = size,
-    h = first().length,
+fun List<String>.rect() = Rect(
+    w = first().length,
+    h = size,
 )
 
 fun List<String>.mirrorHor() = map(String::reversed)
@@ -113,10 +113,10 @@ fun List<String>.mirrorHor() = map(String::reversed)
 fun List<String>.mirrorVer() = reversed()
 
 fun List<String>.transpose(): List<String> {
-    val (n, m) = dim()
-    return List(m) { j ->
-        List(n) { i ->
-            this[i][j]
+    val (w, h) = rect()
+    return List(w) { x ->
+        List(h) { y ->
+            this[y][x]
         }.joinToString(separator = "")
     }
 }
