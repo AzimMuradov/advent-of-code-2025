@@ -57,7 +57,26 @@ value class Vec private constructor(private val packedValue: Long) {
         val MOVE_RIGHT: Vec = Vec(x = 1, y = 0)
         val MOVE_LEFT: Vec = Vec(x = -1, y = 0)
 
-        val MOVES: List<Vec> = listOf(MOVE_UP, MOVE_DOWN, MOVE_RIGHT, MOVE_LEFT)
+        val MOVE_UP_RIGHT: Vec = Vec(x = 1, y = -1)
+        val MOVE_UP_LEFT: Vec = Vec(x = -1, y = -1)
+        val MOVE_DOWN_RIGHT: Vec = Vec(x = 1, y = 1)
+        val MOVE_DOWN_LEFT: Vec = Vec(x = -1, y = 1)
+
+        val MOVES_4_STRAIGHT: List<Vec> = listOf(
+            MOVE_UP,
+            MOVE_DOWN,
+            MOVE_RIGHT,
+            MOVE_LEFT
+        )
+
+        val MOVES_4_DIAGONAL: List<Vec> = listOf(
+            MOVE_UP_RIGHT,
+            MOVE_UP_LEFT,
+            MOVE_DOWN_RIGHT,
+            MOVE_DOWN_LEFT,
+        )
+
+        val MOVES_8: List<Vec> = MOVES_4_STRAIGHT + MOVES_4_DIAGONAL
     }
 }
 
