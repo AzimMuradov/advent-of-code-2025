@@ -103,6 +103,12 @@ inline fun <T> List<T>.indexOfLastOrNull(
     .indexOfLast(predicate)
     .takeUnless { it == -1 }
 
+fun List<List<*>>.rect() = Rect(
+    w = first().size,
+    h = size,
+)
+
+@JvmName("rectString")
 fun List<String>.rect() = Rect(
     w = first().length,
     h = size,
