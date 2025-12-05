@@ -38,6 +38,14 @@ fun <T> List<T>.toPair() = Pair(this[0], this[1])
  */
 fun <T> List<T>.toTriple() = Triple(this[0], this[1], this[2])
 
+fun Pair<Int, Int>.toRange() = first..second
+
+fun Pair<Long, Long>.toRange() = first..second
+
+val IntRange.size: Int get() = last - first + 1
+
+val LongRange.size: Long get() = last - first + 1
+
 /**
  * Converts list to triple.
  */
