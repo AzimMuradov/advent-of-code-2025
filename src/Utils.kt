@@ -29,6 +29,13 @@ fun String.toLongs(separator: String = " ") = this
     .map(String::toLong)
 
 /**
+ * Split string to longs using provided [separator].
+ */
+fun String.toLongs(separator: Regex) = this
+    .split(separator)
+    .map(String::toLong)
+
+/**
  * Converts list to pair.
  */
 fun <T> List<T>.toPair() = Pair(this[0], this[1])
@@ -126,6 +133,16 @@ fun List<String>.mirrorHor() = map(String::reversed)
 
 fun List<String>.mirrorVer() = reversed()
 
+fun <T> List<List<T>>.transpose(): List<List<T>> {
+    val (w, h) = rect()
+    return List(w) { x ->
+        List(h) { y ->
+            this[y][x]
+        }
+    }
+}
+
+@JvmName("transposeString")
 fun List<String>.transpose(): List<String> {
     val (w, h) = rect()
     return List(w) { x ->
