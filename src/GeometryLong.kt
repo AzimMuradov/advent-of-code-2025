@@ -50,3 +50,17 @@ fun Pair<Long, Long>.toPosLong(): PosLong = PosLong(first, second)
 fun VecLong.toPair(): Pair<Long, Long> = x to y
 
 fun Pair<Long, Long>.toVecLong(): VecLong = VecLong(first, second)
+
+
+// Other
+
+fun positionsSeq(a: PosLong, b: PosLong): Sequence<PosLong> = sequence {
+    val (fromX, toX) = if (a.x < b.x) a.x to b.x else b.x to a.x
+    val (fromY, toY) = if (a.y < b.y) a.y to b.y else b.y to a.y
+
+    for (x in fromX..toX) {
+        for (y in fromY..toY) {
+            yield(PosLong(x, y))
+        }
+    }
+}
