@@ -37,6 +37,18 @@ fun String.toLongs(separator: Regex) = this
     .map(String::toLong)
 
 /**
+ * Removes from a string both the prefix and suffix of given lengths.
+ */
+fun String.removeSurrounding(prefixLength: Int, suffixLength: Int): String =
+    substring(prefixLength, length - suffixLength)
+
+/**
+ * Removes from a string both the prefix and suffix of given length.
+ */
+fun String.removeSurrounding(length: Int): String =
+    removeSurrounding(length, length)
+
+/**
  * Converts list to pair.
  */
 fun <T> List<T>.toPair() = Pair(this[0], this[1])
@@ -226,6 +238,48 @@ inline fun <T> Iterable<Iterable<T>>.iterate(b: (Int, Int, T) -> Unit) =
         }
     }
 
+@JvmName("iterateOverIntRanges")
+inline fun iterateOverRanges(ranges: List<IntRange>, b: (List<Int>) -> Unit) {
+    if (ranges.any { it.isEmpty() }) return
+
+    val state = ranges.mapTo(mutableListOf()) { r -> r.first }
+    multiloop@ while (true) {
+        for (i in state.indices.reversed()) {
+            if (state[i] !in ranges[i]) {
+                if (i != 0) {
+                    state[i] = ranges[i].first
+                    state[i - 1] += 1
+                } else {
+                    break@multiloop
+                }
+            }
+        }
+        b(state.toList())
+        state[state.lastIndex] += 1
+    }
+}
+
+@JvmName("iterateOverLongRanges")
+inline fun iterateOverRanges(ranges: List<LongRange>, b: (List<Long>) -> Unit) {
+    if (ranges.any { it.isEmpty() }) return
+
+    val state = ranges.mapTo(mutableListOf()) { r -> r.first }
+    multiloop@ while (true) {
+        for (i in state.indices.reversed()) {
+            if (state[i] !in ranges[i]) {
+                if (i != 0) {
+                    state[i] = ranges[i].first
+                    state[i - 1] += 1
+                } else {
+                    break@multiloop
+                }
+            }
+        }
+        b(state.toList())
+        state[state.lastIndex] += 1
+    }
+}
+
 inline fun <T> List<T>.iteratePermutations(b: (T, T) -> Unit) {
     for (i in 0..lastIndex) {
         for (j in 0..lastIndex) {
@@ -278,3 +332,39 @@ fun String.md5() = BigInteger(1, MessageDigest.getInstance("MD5").digest(toByteA
  * The cleaner shorthand for printing output.
  */
 fun Any?.println() = println(this)
+
+fun gcd(a: Int, b: Int): Int {
+    if (a == 0) return abs(b)
+    if (b == 0) return abs(a)
+
+    var a = if (a > 0) a else -a
+    var b = if (b > 0) b else -b
+
+    while (b != 0) {
+        val temp = b
+        b = a % b
+        a = temp
+    }
+
+    return a
+}
+
+fun gcd(a: Long, b: Long): Long {
+    if (a == 0L) return abs(b)
+    if (b == 0L) return abs(a)
+
+    var a = if (a > 0) a else -a
+    var b = if (b > 0) b else -b
+
+    while (b != 0L) {
+        val temp = b
+        b = a % b
+        a = temp
+    }
+
+    return a
+}
+
+fun gcd(vararg elements: Int): Int = elements.reduce(operation = ::gcd)
+
+fun gcd(vararg elements: Long): Long = elements.reduce(operation = ::gcd)

@@ -1,25 +1,3 @@
-inline fun List<LongRange>.iterate(f: (List<Long>) -> Unit) {
-    if (any { it.isEmpty() }) return
-
-    val ranges = this
-    val state = map { r -> r.first }.toMutableList()
-    multiloop@ while (true) {
-        for (i in state.indices.reversed()) {
-            if (state[i] !in ranges[i]) {
-                if (i != 0) {
-                    state[i] = ranges[i].first
-                    state[i - 1] += 1
-                } else {
-                    break@multiloop
-                }
-            }
-        }
-        f(state.toList())
-        state[state.lastIndex] += 1
-    }
-}
-
-
 fun main() {
     data class MachineManual(
         val size: Int,
@@ -28,90 +6,82 @@ fun main() {
         val joltageRequirements: List<Long>,
     )
 
-    fun part1(machineManuals: List<MachineManual>): Long {
-        return machineManuals.sumOf { (size, diagram, wiring) ->
-            val memory = mutableMapOf(List(size) { false } to 0)
-            var iter = mapOf(List(size) { false } to 0)
-            while (diagram !in memory) {
-                iter = buildMap {
-                    for ((lights, cnt) in iter) {
-                        for (w in wiring) {
-                            val newLights = lights.workAsMut {
-                                for (i in w) {
-                                    this[i] = !this[i]
-                                }
-                            }
-                            val mem = memory[newLights]
-                            if (mem == null || mem > cnt + 1) {
-                                memory[newLights] = cnt + 1
-                                put(newLights, cnt + 1)
-                            }
+    fun part1(machineManuals: List<MachineManual>): Long = machineManuals.sumOf { (size, correctLights, buttons) ->
+        val memory = mutableSetOf(List(size) { false })
+        val q = ArrayDeque<Pair<List<Boolean>, Int>>().apply {
+            add(List(size) { false } to 0)
+        }
+        searchLoop@ while (correctLights !in memory) {
+            val (lights, count) = q.removeFirst()
+            for (button in buttons) {
+                val newLights = lights.workAsMut {
+                    for (i in button) {
+                        this[i] = !this[i]
+                    }
+                }
+                if (newLights !in memory) {
+                    memory += newLights
+                    q.addLast(newLights to count + 1)
+                }
+                if (newLights == correctLights) {
+                    break@searchLoop
+                }
+            }
+        }
+        val (_, minButtonPressesCount) = q.last()
+        minButtonPressesCount
+    }.toLong()
+
+    fun part2(machineManuals: List<MachineManual>): Long = machineManuals.sumOf { (size, _, buttons, correctJoltage) ->
+        val equations = run {
+            val coefficients = buttons.map { button ->
+                val button = button.toSet()
+                List(size) { i ->
+                    if (i in button) 1L else 0L
+                }
+            }.transpose()
+
+            SystemOfEquations(equations = (coefficients zip correctJoltage).map { (ks, v) -> ks + v })
+        }
+
+        when (val solution = equations.solve()) {
+            is Solution.One -> solution.values.sum()
+
+            is Solution.Multiple -> {
+                val (_, freeIndices, depEqs) = solution
+
+                val iterationRanges = freeIndices.map { freeI ->
+                    0..buttons[freeI].minOf(correctJoltage::get)
+                }
+
+                val sums = sequence {
+                    iterateOverRanges(iterationRanges) { freeVals ->
+                        val proposedSolution = (freeIndices zip freeVals).toMap()
+                        val depVals = depEqs.values.map { depEq -> depEq.solveOrNull(proposedSolution) }
+                        if (depVals.none { it == null }) {
+                            yield(depVals.sumOf { it!! } + freeVals.sum())
                         }
                     }
                 }
-            }
-            memory.getValue(diagram)
-        }.toLong()
-    }
-
-    fun part2(machineManuals: List<MachineManual>): Long {
-        return machineManuals.sumOf { (size, _, schs, reqs) ->
-            val equations = run {
-                val left = schs.map { w ->
-                    val w = w.toSet()
-                    List(size) { if (it in w) 1L else 0L }
-                }.transpose()
-
-                val lines = (left zip reqs).map { (ks, v) -> ks + v }
-
-                Matrix(lines)
+                sums.min()
             }
 
-            when (val solution = solveSystemOfLinearEquations(equations)) {
-                is Solution.One -> solution.values.sum()
-
-                is Solution.Multiple -> {
-                    val (_, freeIds, depEqs) = solution
-
-                    val iterationRanges = freeIds.map {
-                        0..schs[it].minOf(reqs::get)
-                    }
-
-                    val sums = sequence {
-                        iterationRanges.iterate { freeVals ->
-                            val proposedSolution = (freeIds zip freeVals).toMap()
-                            val depVals = depEqs.map { (_, depEq) -> depEq.solveOrNull(proposedSolution) }
-                            if (depVals.all { it != null }) {
-                                yield(depVals.filterNotNull().sum() + freeVals.sum())
-                            }
-                        }
-                    }
-                    sums.min()
-                }
-
-                Solution.None -> error("unreachable")
-            }
+            Solution.None -> error("unreachable")
         }
     }
 
 
     val machineManuals = readInputLines("day-10-input").map { line ->
-        val split = line.split(" ")
-        val indicatorLightDiagram = split
-            .first()
-            .drop(1).dropLast(1)
-            .map { it == '#' }
-        val buttonWiringSchematics = split
-            .drop(1).dropLast(1)
-            .map { buttonWiringSchematic ->
-                buttonWiringSchematic
-                    .drop(1).dropLast(1)
-                    .toInts(separator = ",")
-            }
-        val joltageRequirements = split
-            .last()
-            .drop(1).dropLast(1)
-            .toLongs(separator = ",")
+        val (ild, bws, jr) = run {
+            val spaceSplit = line.split(" ").map { it.removeSurrounding(length = 1) }
+            spaceSplit.splitAt(1, spaceSplit.lastIndex)
+        }
+
+        val indicatorLightDiagram = ild.first().map { it == '#' }
+        val buttonWiringSchematics = bws.map { schematic ->
+            schematic.toInts(separator = ",")
+        }
+        val joltageRequirements = jr.first().toLongs(separator = ",")
 
         MachineManual(
             size = indicatorLightDiagram.size,
