@@ -19,23 +19,16 @@ fun main() {
         val lineLength = lines.maxOf { it.length }
         lines.map { it.padEnd(lineLength) }
     }
-    val problems = buildList {
-        add(mutableListOf())
-        for (lineT in lines.transpose()) {
-            if (lineT.isNotBlank()) {
-                last().add(lineT)
-            } else {
-                add(mutableListOf())
-            }
+    val problems = lines
+        .transpose()
+        .joinToString(separator = "\n")
+        .split(Regex("""\n {${lines.size}}\n"""))
+        .map(String::lines)
+        .map(List<String>::transpose)
+        .map { lines ->
+            val (numLines, op) = lines.splitAt(lines.lastIndex)
+            Problem(numLines, op = op.first().trim())
         }
-    }.map { linesT ->
-        linesT.transpose()
-    }.map { lines ->
-        Problem(
-            numLines = lines.dropLast(n = 1),
-            op = lines.last().trim(),
-        )
-    }
 
     part1(problems).println()
     part2(problems).println()

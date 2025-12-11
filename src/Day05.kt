@@ -3,25 +3,23 @@ import kotlin.math.max
 
 fun main() {
     fun part1(freshIdRanges: List<LongRange>, ids: List<Long>): Int = ids.count { id ->
-        freshIdRanges.any { id in it }
+        freshIdRanges.any { freshIdRange -> id in freshIdRange }
     }
 
     fun part2(freshIdRanges: List<LongRange>): Long {
-        val sorted = freshIdRanges.sortedByDescending { it.first }.toMutableList()
-        val merged = buildList {
-            var merging = sorted.removeLast()
-            while (sorted.isNotEmpty()) {
-                val range = sorted.removeLast()
-                if (merging.last >= range.first) {
-                    merging = merging.first..max(merging.last, range.last)
-                } else {
-                    add(merging)
-                    merging = range
-                }
+        var freshIdCount = 0L
+        var lastFreshId = -1L
+        for (freshIdRange in freshIdRanges.sortedBy { it.first }) {
+            if (lastFreshId >= freshIdRange.first) {
+                val newLastFreshId = max(lastFreshId, freshIdRange.last)
+                freshIdCount += newLastFreshId - lastFreshId
+                lastFreshId = newLastFreshId
+            } else {
+                freshIdCount += freshIdRange.size
+                lastFreshId = freshIdRange.last
             }
-            add(merging)
         }
-        return merged.sumOf(LongRange::size)
+        return freshIdCount
     }
 
 

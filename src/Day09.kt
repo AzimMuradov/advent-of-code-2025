@@ -6,8 +6,7 @@ import kotlin.math.sign
 
 
 fun main() {
-    fun area(a: PosLong, b: PosLong): Long =
-        (abs(a.x - b.x) + 1) * (abs(a.y - b.y) + 1)
+    fun area(a: PosLong, b: PosLong): Long = (abs(a.x - b.x) + 1) * (abs(a.y - b.y) + 1)
 
     fun part1(redSquares: List<PosLong>): Long {
         val areas = sequence {
@@ -31,18 +30,18 @@ fun main() {
                 return true
             }
 
-            val cnt = horPolygonSides.count { (a, b) ->
+            val rayIntersectionCount = horPolygonSides.count { (a, b) ->
                 val (minX, maxX) = min(a.x, b.x) to max(a.x, b.x)
                 x in minX..<maxX && y < a.y
             }
-            return cnt % 2 == 1
+            return rayIntersectionCount % 2 == 1
         }
 
-        val areasToCorners = TreeMap<Long, Pair<PosLong, PosLong>>().apply {
+        val sortedAreasToCorners = TreeMap<Long, Pair<PosLong, PosLong>>().apply {
             redSquares.iterateOrderedCombinations { a, b ->
                 put(area(a, b), a to b)
             }
-        }
+        }.toList()
 
         val xsToCheck: Set<Long> = run {
             val xs = redSquares.mapTo(mutableSetOf()) { it.x }
@@ -53,7 +52,7 @@ fun main() {
             ys.flatMapTo(mutableSetOf()) { listOf(it - 1, it + 1) } - ys
         }
 
-        return areasToCorners.toList().last { (_, corners) ->
+        val (maxArea, _) = sortedAreasToCorners.last { (_, corners) ->
             val (a, b) = corners
             sequenceOf(
                 positionsSeq(a, b.copy(x = a.x)).filter { it.y in ysToCheck },
@@ -61,7 +60,8 @@ fun main() {
                 positionsSeq(a.copy(x = b.x), b).filter { it.y in ysToCheck },
                 positionsSeq(a.copy(y = b.y), b).filter { it.x in xsToCheck },
             ).flatten().all(PosLong::isInsidePolygon)
-        }.first
+        }
+        return maxArea
     }
 
 

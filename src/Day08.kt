@@ -26,7 +26,7 @@ fun main() {
 
         for ((a, b) in orderedConnections) {
             ds.union(a, b)
-            if (ds.setIds().distinct().size == 1) {
+            if (ds.setIds().toSet().size == 1) {
                 return junctionBoxes[a].first * junctionBoxes[b].first
             }
         }
@@ -34,7 +34,9 @@ fun main() {
     }
 
 
-    val junctionBoxes = readInputLines("day-08-input").map { it.toLongs(",").toTriple() }
+    val junctionBoxes = readInputLines("day-08-input").map { line ->
+        line.toLongs(",").toTriple()
+    }
     val orderedConnections = getOrderedConnections(junctionBoxes)
 
     part1(junctionBoxes, orderedConnections).println()

@@ -2,6 +2,7 @@ import java.math.BigInteger
 import java.security.MessageDigest
 import kotlin.io.path.Path
 import kotlin.io.path.readText
+import kotlin.math.abs
 
 
 /**
@@ -58,6 +59,32 @@ val LongRange.size: Long get() = last - first + 1
  */
 fun <T> List<T>.workAsMut(block: MutableList<T>.() -> Unit): List<T> =
     toMutableList().apply(block)
+
+/**
+ * Splits string into several at the given [indices].
+ *
+ * Provided [indices] would be
+ * the exclusive end and inclusive start of resulting strings.
+ */
+fun String.splitAt(vararg indices: Int): List<String> =
+    (listOf(0) + indices.asList() + listOf(length))
+        .zipWithNext()
+        .map { (startIndex, endIndex) ->
+            substring(startIndex, endIndex)
+        }
+
+/**
+ * Splits list into several at the given [indices].
+ *
+ * Provided [indices] would be
+ * the exclusive end and inclusive start of resulting lists.
+ */
+fun <T> List<T>.splitAt(vararg indices: Int): List<List<T>> =
+    (listOf(0) + indices.asList() + listOf(size))
+        .zipWithNext()
+        .map { (startIndex, endIndex) ->
+            subList(startIndex, endIndex)
+        }
 
 /**
  * Returns the product of all elements in the collection.
@@ -117,6 +144,46 @@ inline fun <T> List<T>.indexOfLastOrNull(
 ): Int? = this
     .indexOfLast(predicate)
     .takeUnless { it == -1 }
+
+@JvmName("plusIntTo")
+fun <K> MutableMap<K, Int>.plusTo(key: K, number: Int) {
+    put(key, getOrDefault(key, defaultValue = 0) + number)
+}
+
+@JvmName("plusLongTo")
+fun <K> MutableMap<K, Long>.plusTo(key: K, number: Long) {
+    put(key, getOrDefault(key, defaultValue = 0) + number)
+}
+
+@JvmName("minusIntTo")
+fun <K> MutableMap<K, Int>.minusTo(key: K, number: Int) {
+    plusTo(key, -number)
+}
+
+@JvmName("minusLongTo")
+fun <K> MutableMap<K, Long>.minusTo(key: K, number: Long) {
+    plusTo(key, -number)
+}
+
+@JvmName("incInt")
+fun <K> MutableMap<K, Int>.inc(key: K) {
+    plusTo(key, 1)
+}
+
+@JvmName("incLong")
+fun <K> MutableMap<K, Long>.inc(key: K) {
+    plusTo(key, 1)
+}
+
+@JvmName("decInt")
+fun <K> MutableMap<K, Int>.dec(key: K) {
+    minusTo(key, 1)
+}
+
+@JvmName("decLong")
+fun <K> MutableMap<K, Long>.dec(key: K) {
+    minusTo(key, 1)
+}
 
 fun List<List<*>>.rect() = Rect(
     w = first().size,

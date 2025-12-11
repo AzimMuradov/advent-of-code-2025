@@ -1,14 +1,17 @@
 fun main() {
-    fun canAccess(obj: Char, pos: Pos, grid: List<List<Char>>, dim: Rect): Boolean {
-        return obj == '@' &&
-                Vec.MOVES_8.map { pos + it }.count { it in dim && grid[it] == '@' } < 4
-    }
+    fun canAccess(pos: Pos, grid: List<List<Char>>, dim: Rect): Boolean =
+        Vec.MOVES_8
+            .asSequence()
+            .map { move -> pos + move }
+            .filter { pos -> pos in dim }
+            .map { pos -> grid[pos] }
+            .count { obj -> obj == '@' } < 4
 
     fun part1(grid: List<List<Char>>): Int {
         val dim = grid.rect()
         var count = 0
         grid.iterateMap { pos, obj ->
-            if (canAccess(obj, pos, grid, dim)) {
+            if (obj == '@' && canAccess(pos, grid, dim)) {
                 count += 1
             }
         }
@@ -21,7 +24,7 @@ fun main() {
         do {
             var keepTrying = false
             grid.iterateMap { pos, obj ->
-                if (canAccess(obj, pos, grid, dim)) {
+                if (obj == '@' && canAccess(pos, grid, dim)) {
                     count += 1
                     grid[pos] = 'x'
                     keepTrying = true
@@ -32,8 +35,8 @@ fun main() {
     }
 
 
-    val grid = readInputLines("day-04-input").map {
-        it.toMutableList()
+    val grid = readInputLines("day-04-input").map { line ->
+        line.toMutableList()
     }
 
     part1(grid).println()

@@ -25,16 +25,18 @@ private fun generateInvalidIds(repeats: List<Int>): SortedSet<Long> {
 
 
 fun main() {
-    fun common(idRanges: List<Pair<Long, Long>>, repeats: List<Int>): Long {
+    fun sumUpAllInvalidIds(idRanges: List<Pair<Long, Long>>, repeats: List<Int>): Long {
         val invalidIds = generateInvalidIds(repeats)
         return idRanges.sumOf { (beg, end) ->
             invalidIds.subSet(beg, end + 1).sum()
         }
     }
 
-    fun part1(idRanges: List<Pair<Long, Long>>): Long = common(idRanges, repeats = listOf(2))
+    fun part1(idRanges: List<Pair<Long, Long>>): Long =
+        sumUpAllInvalidIds(idRanges, repeats = listOf(2))
 
-    fun part2(idRanges: List<Pair<Long, Long>>): Long = common(idRanges, repeats = (2..10).toList())
+    fun part2(idRanges: List<Pair<Long, Long>>): Long =
+        sumUpAllInvalidIds(idRanges, repeats = (2..10).toList())
 
 
     val idRanges = readInputText("day-02-input")

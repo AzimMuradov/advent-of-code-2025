@@ -1,8 +1,8 @@
 fun main() {
-    fun part1(diagram: List<String>): Int {
+    fun part1(tachyonManifoldDiagram: List<String>): Int {
         var splitCount = 0
-        var beams = setOf(diagram.rect().w / 2)
-        for (line in diagram.drop(1)) {
+        var beams = setOf(tachyonManifoldDiagram.rect().w / 2)
+        for (line in tachyonManifoldDiagram.drop(1)) {
             beams = buildSet {
                 for (beam in beams) {
                     if (line[beam] == '.') {
@@ -17,20 +17,16 @@ fun main() {
         return splitCount
     }
 
-    fun part2(diagram: List<String>): Long {
-        fun MutableMap<Int, Long>.registerBeam(beam: Int, timelineCount: Long) {
-            put(beam, timelineCount + getOrDefault(beam, 0))
-        }
-
-        var beams = mapOf(diagram.rect().w / 2 to 1L)
-        for (line in diagram.drop(1)) {
+    fun part2(tachyonManifoldDiagram: List<String>): Long {
+        var beams = mapOf(tachyonManifoldDiagram.rect().w / 2 to 1L)
+        for (line in tachyonManifoldDiagram.drop(1)) {
             beams = buildMap {
                 for ((beam, timelineCount) in beams) {
                     if (line[beam] == '.') {
-                        registerBeam(beam, timelineCount)
+                        plusTo(beam, timelineCount)
                     } else {
-                        registerBeam(beam - 1, timelineCount)
-                        registerBeam(beam + 1, timelineCount)
+                        plusTo(beam - 1, timelineCount)
+                        plusTo(beam + 1, timelineCount)
                     }
                 }
             }
@@ -39,8 +35,8 @@ fun main() {
     }
 
 
-    val diagram = readInputLines("day-07-input")
+    val tachyonManifoldDiagram = readInputLines("day-07-input")
 
-    part1(diagram).println()
-    part2(diagram).println()
+    part1(tachyonManifoldDiagram).println()
+    part2(tachyonManifoldDiagram).println()
 }

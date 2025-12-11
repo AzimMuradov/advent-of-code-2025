@@ -28,10 +28,11 @@ fun main() {
     }
 
 
-    val rotations = readInputLines("day-01-input").map {
+    val rotations = readInputLines("day-01-input").map { line ->
+        val (dirString, distString) = line.splitAt(1)
         Rotation(
-            direction = if (it[0] == 'L') -1 else 1,
-            distance = it.drop(1).toInt()
+            direction = if (dirString == "L") -1 else 1,
+            distance = distString.toInt()
         )
     }
 

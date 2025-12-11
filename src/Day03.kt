@@ -1,28 +1,28 @@
 fun main() {
-    fun common(bank: String, len: Int): Long {
-        var num = ""
+    fun findMaxJoltage(bank: String, joltageLength: Int): Long {
+        var maxJoltageString = ""
         var rangeStart = 0
-        for (j in len - 1 downTo 0) {
+        for (rangeEnd in bank.length - joltageLength..<bank.length) {
             var max = '0'
             var maxI: Int? = null
-            for (i in bank.lastIndex - j downTo rangeStart) {
+            for (i in rangeEnd downTo rangeStart) {
                 if (bank[i] >= max) {
                     max = bank[i]
                     maxI = i
                 }
             }
             rangeStart = maxI!! + 1
-            num += max
+            maxJoltageString += max
         }
-        return num.toLong()
+        return maxJoltageString.toLong()
     }
 
     fun part1(banks: List<String>): Long = banks.sumOf { bank ->
-        common(bank, len = 2)
+        findMaxJoltage(bank, joltageLength = 2)
     }
 
     fun part2(banks: List<String>): Long = banks.sumOf { bank ->
-        common(bank, len = 12)
+        findMaxJoltage(bank, joltageLength = 12)
     }
 
 
