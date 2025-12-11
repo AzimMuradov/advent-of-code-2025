@@ -2,10 +2,8 @@ fun <T : Any> topologicalSort(vertices: Set<T>, adjList: Map<T, List<T>>): List<
     val incomingCount = vertices
         .associateWithTo(mutableMapOf()) { 0L }
         .apply {
-            for ((_, us) in adjList) {
-                for (u in us) {
-                    this[u] = this.getValue(u) + 1
-                }
+            for (u in adjList.asSequence().flatMap { it.value }) {
+                inc(u)
             }
         }
 
@@ -20,7 +18,7 @@ fun <T : Any> topologicalSort(vertices: Set<T>, adjList: Map<T, List<T>>): List<
             add(v)
 
             for (u in adjList[v] ?: continue) {
-                incomingCount[u] = incomingCount.getValue(u) - 1
+                incomingCount.dec(u)
                 if (incomingCount[u] == 0L) {
                     q.addLast(u)
                 }
@@ -37,7 +35,7 @@ fun <T : Any> countPaths(
 
     for (v in sortedVertices) {
         for (u in adjList[v] ?: continue) {
-            pathsCount[u] = pathsCount.getValue(u) + pathsCount.getValue(v)
+            pathsCount.plusTo(u, pathsCount.getValue(v))
         }
     }
 
