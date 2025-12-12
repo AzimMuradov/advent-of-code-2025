@@ -91,6 +91,9 @@ value class Rect private constructor(private val packedValue: Long) {
     val h: Int get() = (packedValue and 0xFFFFFFFF).toInt()
 
 
+    fun area(): Int = w * h
+
+
     operator fun component1(): Int = w
 
     operator fun component2(): Int = h
