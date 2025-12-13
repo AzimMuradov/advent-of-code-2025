@@ -1,40 +1,38 @@
-fun <T : Any> topologicalSort(vertices: Set<T>, adjList: Map<T, List<T>>): List<T> {
-    val incomingCount = vertices
-        .associateWithTo(mutableMapOf()) { 0L }
-        .apply {
-            for (u in adjList.asSequence().flatMap { it.value }) {
-                inc(u)
-            }
-        }
+data class DAG<T : Any>(
+    val adjacencyMap: Map<T, List<T>>,
+) {
 
-    return buildList {
-        val q = ArrayDeque<T>().apply {
-            for ((k, v) in incomingCount) {
-                if (v == 0L) add(k)
-            }
-        }
-        while (!q.isEmpty()) {
-            val v = q.removeFirst()
-            add(v)
+    val topologicallySortedVertices: List<T> by lazy(::calculateTopologicallySortedVertices)
 
-            for (u in adjList[v] ?: continue) {
-                incomingCount.dec(u)
-                if (incomingCount[u] == 0L) {
-                    q.addLast(u)
+    private fun calculateTopologicallySortedVertices(): List<T> {
+        val incomingCount = adjacencyMap
+            .values.asSequence().flatten()
+            .groupingBy { it }.eachCountTo(mutableMapOf())
+
+        val q = ArrayDeque(elements = adjacencyMap.keys - incomingCount.keys)
+
+        return buildList {
+            while (q.isNotEmpty()) {
+                val v = q.removeFirst()
+                add(v)
+
+                for (u in adjacencyMap[v] ?: continue) {
+                    incomingCount.dec(u)
+                    if (incomingCount[u] == 0) {
+                        q.addLast(u)
+                    }
                 }
             }
         }
     }
 }
 
-fun <T : Any> countPaths(
-    sortedVertices: List<T>, adjList: Map<T, List<T>>,
-    start: T, end: T
-): Long {
+
+fun <T : Any> DAG<T>.countPaths(start: T, end: T): Long {
     val pathsCount = mutableMapOf(start to 1L).withDefault { 0L }
 
-    for (v in sortedVertices) {
-        for (u in adjList[v] ?: continue) {
+    for (v in topologicallySortedVertices) {
+        for (u in adjacencyMap[v] ?: continue) {
             pathsCount.plusTo(u, pathsCount.getValue(v))
         }
     }
@@ -42,9 +40,6 @@ fun <T : Any> countPaths(
     return pathsCount.getValue(end)
 }
 
-fun <T : Any> countPaths(
-    sortedVertices: List<T>, adjList: Map<T, List<T>>,
-    path: List<T>,
-): Long = path.zipWithNext().map { (start, end) ->
-    countPaths(sortedVertices, adjList, start, end)
+fun <T : Any> DAG<T>.countPaths(path: List<T>): Long = path.zipWithNext().map { (start, end) ->
+    countPaths(start, end)
 }.sorted().product()
