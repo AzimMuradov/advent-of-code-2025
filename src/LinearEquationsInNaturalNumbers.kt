@@ -31,9 +31,9 @@ sealed class Solution {
     data class One(val values: List<Long>) : Solution()
 
     data class Multiple(
-        val dependentIndices: List<Int>,
-        val freeIndices: List<Int>,
-        val dependentEquations: Map<Int, DependentEquation>,
+        val dependentVariableIndices: List<Int>,
+        val freeVariableIndices: List<Int>,
+        val dependentVariableEquations: Map<Int, DependentVariableEquation>,
     ) : Solution()
 
     // TODO : Implement Solution.None case for future uses
@@ -41,7 +41,7 @@ sealed class Solution {
 }
 
 // x = (k_0 * v_0 + ... + k_n * v_n + v) / d, x in Nat
-data class DependentEquation(
+data class DependentVariableEquation(
     val coefficients: Map<Int, Long>,
     val value: Long,
     val divisor: Long,
@@ -61,59 +61,48 @@ data class DependentEquation(
 
 fun SystemOfEquations.solve(): Solution {
     val resultingEquations = mutableListOf<List<Long>>()
-    val dependentIndices = mutableListOf<Int>()
-    val freeIndices = mutableListOf<Int>()
+    val depVarIndices = mutableListOf<Int>()
+    val freeVarIndices = mutableListOf<Int>()
 
-    run {
-        val equations = simplify(equations)
+    val equations = equations.mapTo(mutableListOf(), ::simplify)
 
-        var rowI = 0
-        var colI = 0
-        val rowN = equations.size
-        val colN = equations.first().size - 1
-
-        while (rowI < rowN && colI < colN) {
-            val equation = run {
-                val index = equations.indexOfFirstOrNull { row -> row[colI] != 0L } ?: run {
-                    freeIndices += colI++
-                    continue
-                }
-                equations.removeAt(index)
+    for (varI in 0..<equations.first().size - 1) {
+        val equation = run {
+            val index = equations.indexOfFirstOrNull { eq -> eq[varI] != 0L } ?: run {
+                freeVarIndices += varI
+                continue
             }
-
-            resultingEquations += equation
-
-            subtract(equations, equation, index = colI)
-
-            rowI++
-            dependentIndices += colI++
+            equations.removeAt(index)
         }
+        resultingEquations += equation
 
-        if (colI < colN) {
-            freeIndices += colI..<colN
-        }
+        subtractAndSimplify(equations, equation, varIndex = varI)
+        depVarIndices += varI
     }
 
-    for ((i, j) in (dependentIndices zip resultingEquations.indices).reversed()) {
-        subtract(
-            equations = resultingEquations.subList(0, j),
-            equation = resultingEquations[j],
-            index = i,
+    for ((varI, eqI) in (depVarIndices zip resultingEquations.indices).reversed()) {
+        subtractAndSimplify(
+            equations = resultingEquations.subList(0, eqI),
+            equation = resultingEquations[eqI],
+            varIndex = varI,
         )
     }
 
-    return if (freeIndices.isNotEmpty()) {
+    return if (freeVarIndices.isNotEmpty()) {
         Solution.Multiple(
-            dependentIndices,
-            freeIndices,
-            dependentEquations = (dependentIndices zip resultingEquations).toMap().mapValues { (i, equation) ->
-                val (coefficients, value) = equation.splitAt(equation.lastIndex)
-                DependentEquation(
-                    coefficients = (coefficients.indices zip coefficients).toMap().filterKeys { i -> i in freeIndices },
-                    value = -value.first(),
-                    divisor = -equation[i],
-                )
-            },
+            dependentVariableIndices = depVarIndices,
+            freeVariableIndices = freeVarIndices,
+            dependentVariableEquations = (depVarIndices zip resultingEquations).toMap()
+                .mapValues { (varI, eq) ->
+                    val (coefficients, value) = eq.splitAt(eq.lastIndex)
+                    DependentVariableEquation(
+                        coefficients = coefficients
+                            .mapIndexed { i, k -> i to k }.toMap()
+                            .filterKeys(freeVarIndices::contains),
+                        value = -value.first(),
+                        divisor = -eq[varI],
+                    )
+                },
         )
     } else {
         Solution.One(
@@ -122,24 +111,18 @@ fun SystemOfEquations.solve(): Solution {
     }
 }
 
-@JvmName("simplifyEquations")
-private fun simplify(equations: List<List<Long>>): MutableList<List<Long>> {
-    return equations.mapTo(mutableListOf(), ::simplify)
-}
-
-@JvmName("simplifyEquation")
 private fun simplify(equation: List<Long>): List<Long> {
-    val gcd = gcd(*equation.toTypedArray().toLongArray())
+    val gcd = gcd(*equation.toLongArray())
     return if (gcd != 0L) equation.map { it / gcd } else equation
 }
 
-private fun subtract(equations: MutableList<List<Long>>, equation: List<Long>, index: Int) {
-    fun subtract(eqA: List<Long>, eqB: List<Long>, index: Int): List<Long> {
-        val kA = eqB[index]
-        val kB = eqA[index]
-        return (eqA zip eqB).map { (a, b) -> kA * a - kB * b }
+private fun subtractAndSimplify(equations: MutableList<List<Long>>, equation: List<Long>, varIndex: Int) {
+    fun subtract(eqA: List<Long>, eqB: List<Long>, varI: Int): List<Long> {
+        val multA = eqB[varI]
+        val multB = eqA[varI]
+        return eqA.zip(eqB) { kA, kB -> multA * kA - multB * kB }
     }
     for ((i, eq) in equations.withIndex()) {
-        equations[i] = simplify(equation = subtract(eq, equation, index))
+        equations[i] = simplify(equation = subtract(eq, equation, varIndex))
     }
 }

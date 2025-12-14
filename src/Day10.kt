@@ -41,22 +41,30 @@ fun main() {
                 }
             }.transpose()
 
-            SystemOfEquations(equations = (coefficients zip correctJoltage).map { (ks, v) -> ks + v })
+            SystemOfEquations(equations = coefficients.zip(correctJoltage) { ks, v -> ks + v })
         }
 
         when (val solution = equations.solve()) {
             is Solution.One -> solution.values.sum()
 
             is Solution.Multiple -> {
-                val (_, freeIndices, depEqs) = solution
-
-                val iterationRanges = freeIndices.map { freeI ->
-                    0..buttons[freeI].minOf(correctJoltage::get)
-                }
+                val (_, freeVarIndices, depEqs) = solution
 
                 val sums = sequence {
-                    iterateOverRanges(iterationRanges) { freeVals ->
-                        val proposedSolution = (freeIndices zip freeVals).toMap()
+                    iterateOverLongRanges(
+                        loopCount = freeVarIndices.size,
+                        genRange = { loop, vals ->
+                            val joltageLeft = vals.foldIndexed(initial = correctJoltage) { i, joltageLeft, v ->
+                                joltageLeft.workAsMut {
+                                    buttons[freeVarIndices[i]].forEach {
+                                        this[it] -= v
+                                    }
+                                }
+                            }
+                            0..buttons[freeVarIndices[loop]].minOf(joltageLeft::get)
+                        },
+                    ) { freeVals ->
+                        val proposedSolution = (freeVarIndices zip freeVals).toMap()
                         val depVals = depEqs.values.map { depEq -> depEq.solveOrNull(proposedSolution) }
                         if (depVals.none { it == null }) {
                             yield(depVals.sumOf { it!! } + freeVals.sum())

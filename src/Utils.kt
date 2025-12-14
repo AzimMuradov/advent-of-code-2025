@@ -238,8 +238,7 @@ inline fun <T> Iterable<Iterable<T>>.iterate(b: (Int, Int, T) -> Unit) =
         }
     }
 
-@JvmName("iterateOverIntRanges")
-inline fun iterateOverRanges(ranges: List<IntRange>, b: (List<Int>) -> Unit) {
+inline fun iterateOverIntRanges(ranges: List<IntRange>, b: (List<Int>) -> Unit) {
     if (ranges.any { it.isEmpty() }) return
 
     val state = ranges.mapTo(mutableListOf()) { r -> r.first }
@@ -259,8 +258,7 @@ inline fun iterateOverRanges(ranges: List<IntRange>, b: (List<Int>) -> Unit) {
     }
 }
 
-@JvmName("iterateOverLongRanges")
-inline fun iterateOverRanges(ranges: List<LongRange>, b: (List<Long>) -> Unit) {
+inline fun iterateOverLongRanges(ranges: List<LongRange>, b: (List<Long>) -> Unit) {
     if (ranges.any { it.isEmpty() }) return
 
     val state = ranges.mapTo(mutableListOf()) { r -> r.first }
@@ -277,6 +275,64 @@ inline fun iterateOverRanges(ranges: List<LongRange>, b: (List<Long>) -> Unit) {
         }
         b(state.toList())
         state[state.lastIndex] += 1
+    }
+}
+
+inline fun iterateOverIntRanges(loopCount: Int, genRange: (Int, List<Int>) -> IntRange, b: (List<Int>) -> Unit) {
+    var loop = 0
+    val indices = MutableList(size = loopCount) { 0 }
+    val ranges = MutableList(size = loopCount) { IntRange.EMPTY }
+
+    ranges[loop] = genRange(loop, indices.subList(0, loop).toList())
+    indices[loop] = ranges[loop].firstOrNull() ?: return
+
+    while (true) {
+        if (indices[loop] in ranges[loop]) {
+            if (loop == loopCount - 1) {
+                b(indices.toList())
+            } else {
+                loop++
+                ranges[loop] = genRange(loop, indices.subList(0, loop).toList())
+                indices[loop] = ranges[loop].firstOrNull() ?: 0
+                continue
+            }
+        } else {
+            if (loop > 0) {
+                loop--
+            } else {
+                break
+            }
+        }
+        indices[loop]++
+    }
+}
+
+inline fun iterateOverLongRanges(loopCount: Int, genRange: (Int, List<Long>) -> LongRange, b: (List<Long>) -> Unit) {
+    var loop = 0
+    val indices = MutableList(size = loopCount) { 0L }
+    val ranges = MutableList(size = loopCount) { LongRange.EMPTY }
+
+    ranges[loop] = genRange(loop, indices.subList(0, loop).toList())
+    indices[loop] = ranges[loop].firstOrNull() ?: return
+
+    while (true) {
+        if (indices[loop] in ranges[loop]) {
+            if (loop == loopCount - 1) {
+                b(indices.toList())
+            } else {
+                loop++
+                ranges[loop] = genRange(loop, indices.subList(0, loop).toList())
+                indices[loop] = ranges[loop].firstOrNull() ?: 0
+                continue
+            }
+        } else {
+            if (loop > 0) {
+                loop--
+            } else {
+                break
+            }
+        }
+        indices[loop]++
     }
 }
 
